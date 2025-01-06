@@ -123,6 +123,57 @@ def train_model_process(model, train_dataloader, val_dataloader, num_epochs):
         val_loss_all.append(val_loss / val_total)
         val_acc_all.append(val_correct.double().item() / val_total)
 
+        print("{} Train Loss: {:.4f} Train Accuracy: {:.4f}".format(epoch, train_loss_all[-1], train_acc_all[-1]))
+        print("{}   Val Loss: {:.4f}   Val Accuracy: {:.4f}".format(epoch, val_loss_all[-1], val_acc_all[-1]))
+
+        if best_acc < val_acc_all[-1]:
+            best_acc = val_acc_all[-1]
+            best_model_wts = copy.deepcopy(model.state_dict())
+
+        time_used = time.time() - start_time
+        print("Time used: {:.0f}m{:.0f}s".format(time_used // 60, time_used % 60))
+
+    model.load_state_dict(best_model_wts)
+    torch.save(model.state_dict(), 'D:\\PytorchProject\\ResNet18\\best_model.pth')
+
+    train_process = pd.DataFrame(data={"epoch": range(num_epochs),
+                                       "train_loss_all": train_loss_all,
+                                       "val_loss_all": val_loss_all,
+                                       "train_acc_all": train_acc_all,
+                                       "val_acc_all": val_acc_all})
+
+    return train_process
+
+
+def matplot_acc_loss(train_process):
+    # 显示每一次迭代后的训练集和验证集的损失函数和准确率
+    plt.figure(figsize=(12, 4))
+    plt.subplot(1, 2, 1)
+    plt.plot(train_process['epoch'], train_process.train_loss_all, "ro-", label="Train Loss")
+    plt.plot(train_process['epoch'], train_process.val_loss_all, "bs-", label="Val Loss")
+    plt.legend()
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.subplot(1, 2, 2)
+    plt.plot(train_process['epoch'], train_process.train_acc_all, "ro-", label="Train Accuracy")
+    plt.plot(train_process['epoch'], train_process.val_acc_all, "bs-", label="Val Accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.show()
+
+
+if __name__ == '__main__':
+
+    ResNet18 = ResNet18(Residual)
+
+    train_dataloader, val_dataloader = train_val_data_process()
+
+    train_process = train_model_process(ResNet18, train_dataloader, val_dataloader, num_epochs=20)
+
+    matplot_acc_loss(train_process)
+
+
 
 
 
